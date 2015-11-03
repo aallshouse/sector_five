@@ -1,7 +1,7 @@
 class Bullet
   SPEED = 5
 
-  attr_reader :x, :y, :radius
+  attr_reader :x, :y, :radius, :paces
 
   def initialize(window, x, y, angle)
     @x = x
@@ -10,11 +10,23 @@ class Bullet
     @image = Gosu::Image.new('images/bullet.png')
     @radius = 3
     @window = window
+    @is_nuke = false
+    @paces = 0
+  end
+
+  def make_nuke
+    @image = Gosu::Image.new('images/nuke.png')
+    @is_nuke = true
+  end
+
+  def is_nuke?
+    @is_nuke
   end
 
   def move
   	@x += Gosu.offset_x(@direction, SPEED)
   	@y += Gosu.offset_y(@direction, SPEED)
+    @paces += 1
   end
 
   def draw

@@ -12,10 +12,36 @@ class Player
   	@y = 700
   	@angle = 0
   	@image = Gosu::Image.new('images/ship.png')
+    #Gosu::Image.new('images/ship.png')
   	@velocity_x = 0
   	@velocity_y = 0
   	@radius = 20
   	@window = window
+    @shield_is_on = false
+    @shield_hits = 0
+  end
+
+  def shield_on?
+    @shield_is_on
+  end
+
+  def shield_hit!
+    @shield_hits += 1
+    if @shield_hits == 3
+      turn_shield_off
+      @shield_hits = 0
+    end
+  end
+
+  def turn_shield_on
+    @image = Gosu::Image.new('images/ship_shield.png')
+    @shield_is_on = true
+    @shield_hits = 0
+  end
+
+  def turn_shield_off
+    @image = Gosu::Image.new('images/ship.png')
+    @shield_is_on = false
   end
 
   def draw
@@ -51,6 +77,6 @@ class Player
   	if @y > @window.height - @radius
   	  @velocity_y = 0
   	  @y = @window.height - @radius
-	end
+	  end
   end
 end

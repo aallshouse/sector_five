@@ -8,8 +8,10 @@ require_relative 'credit'
 class SectorFive < Gosu::Window
   WIDTH = 800
   HEIGHT = 600
-  ENEMY_FREQUENCY = 0.05
-  MAX_ENEMIES = 100
+  ENEMY_FREQUENCY = 0.05 #0.05
+  POWER_UP_FREQUENCY = 0.004
+  MAX_ENEMIES = 100 #100
+  #TODO: Do not allow enemies off screen to explode
 
   def initialize
     super(WIDTH, HEIGHT)
@@ -23,6 +25,7 @@ class SectorFive < Gosu::Window
     @enemies = []
     @bullets = []
     @explosions = []
+    @power_ups = []
     @scene = :game
     @enemies_appeared = 0
     @enemies_destroyed = 0
@@ -84,16 +87,29 @@ class SectorFive < Gosu::Window
   	  @enemies.push Enemy.new(self)
   	  @enemies_appeared += 1
   	end
+    if rand < POWER_UP_FREQUENCY
+      @power_ups.push PowerUp.new(self)
+    end
   	@enemies.each do |enemy|
   	  enemy.move
   	end
   	@bullets.each do |bullet|
   	  bullet.move
   	end
+    @power_ups.each do |power_up|
+      power_up.move
+    end
+    @power_ups.dup.each do |power_up|
+      distance = Gosu.distance(power_up.x, power_up.y, @player.x, @player.y)
+      if distance < @player.radius + power_up.radius
+        @power_ups.delete power_up
+        @player.turn_shield_on
+      end
+    end
   	@enemies.dup.each do |enemy|
       @bullets.dup.each do |bullet|
         distance  = Gosu.distance(enemy.x, enemy.y, bullet.x, bullet.y)
-        if distance < enemy.radius + bullet.radius
+        if distance < enemy.radius + bullet.radius and !bullet.is_nuke?
           @enemies.delete enemy
           @bullets.delete bullet
           explosion = Explosion.new(self, enemy.x, enemy.y)
@@ -106,13 +122,13 @@ class SectorFive < Gosu::Window
   	@explosions.dup.each do |explosion|
   	  @enemies.dup.each do |enemy|
   	  	explosion_kill_distance = Gosu.distance(enemy.x, enemy.y, explosion.x, explosion.y)
-	    if explosion_kill_distance < enemy.radius + explosion.radius
-	      @enemies.delete enemy
+	      if explosion_kill_distance < enemy.radius + explosion.radius and enemy.y > 20
+	        @enemies.delete enemy
           explosion2 = Explosion.new(self, enemy.x, enemy.y)
           @explosions.push explosion2
           @enemies_destroyed += 1
           @explosion_sound.play
-	    end
+	      end
   	  end
   	  @explosions.delete explosion if explosion.finished
   	end
@@ -123,11 +139,36 @@ class SectorFive < Gosu::Window
   	end
   	@bullets.dup.each do |bullet|
   	  @bullets.delete bullet unless bullet.onscreen?
+
+      if bullet.is_nuke? and bullet.paces == 50
+        @bullets.delete bullet
+        explosion = Explosion.new(self, bullet.x, bullet.y)
+        @explosions.push explosion
+        
+        @enemies.dup.each do |enemy|
+          @enemies.delete enemy
+          explosion = Explosion.new(self, enemy.x, enemy.y)
+          @explosions.push explosion
+          @enemies_destroyed += 1
+          @explosion_sound.play
+        end
+      end
   	end
   	initialize_end(:count_reached) if @enemies_appeared > MAX_ENEMIES
-  	@enemies.each do |enemy|
+  	@enemies.dup.each do |enemy|
   	  distance = Gosu.distance(enemy.x, enemy.y, @player.x, @player.y)
-  	  initialize_end(:hit_by_enemy) if distance < @player.radius + enemy.radius
+  	  if distance < @player.radius + enemy.radius
+        @enemies.delete enemy
+        explosion = Explosion.new(self, enemy.x, enemy.y)
+        @explosions.push explosion
+        @enemies_destroyed += 1
+        @explosion_sound.play
+        if @player.shield_on?
+          @player.shield_hit!
+        else
+          initialize_end(:hit_by_enemy)
+        end
+      end
   	end
   	initialize_end(:off_top) if @player.y < -@player.radius
   end
@@ -169,6 +210,9 @@ class SectorFive < Gosu::Window
   	@explosions.each do |explosion|
   	  explosion.draw
   	end
+    @power_ups.each do |power_up|
+      power_up.draw
+    end
   end
 
   def draw_end
@@ -193,6 +237,13 @@ class SectorFive < Gosu::Window
   	  @bullets.push Bullet.new(self, @player.x, @player.y, @player.angle)
   	  @shooting_sound.play(0.3)
   	end
+
+    if id == Gosu::KbN
+      bullet = Bullet.new(self, @player.x, @player.y, @player.angle)
+      bullet.make_nuke
+      @bullets.push bullet
+      @shooting_sound.play(0.3)
+    end
   end
 
   def button_down_end(id)
