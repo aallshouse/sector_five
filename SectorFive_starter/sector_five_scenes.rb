@@ -4,117 +4,7 @@ require_relative 'enemy'
 require_relative 'bullet'
 require_relative 'explosion'
 require_relative 'credit'
-
-class GameService
-  ENEMY_FREQUENCY = 0.05 #0.05
-  POWER_UP_FREQUENCY = 0.004
-  MAX_ENEMIES = 400 #100
-
-  attr_accessor :enemies, :bullets, :power_ups, :player,
-                :explosions, :shooting_sound, :explosion_sound
-
-  attr_reader :max_enemies, :enemies_appeared, :enemies_destroyed
-
-  def initialize(window)
-    @window = window
-    @player = Player.new(window)
-    @enemies = []
-    @enemies_appeared = 0
-    @power_ups = []
-    @bullets = []
-    @explosions = []
-    @enemies_destroyed = 0
-    @explosion_sound = Gosu::Sample.new('sounds/explosion.ogg')
-    @shooting_sound = Gosu::Sample.new('sounds/shoot.ogg')
-  end
-
-  def start_game
-    #move initialize game method logic here
-    #all instance variables should be part of this class
-  end
-
-  def create_enemy
-    if rand < ENEMY_FREQUENCY
-      @enemies.push Enemy.new(@window)
-      @enemies_appeared += 1
-    end
-  end
-
-  def create_power_up
-    if rand < POWER_UP_FREQUENCY
-      @power_ups.push PowerUp.new(@window)
-    end
-  end
-
-  def move_enemies
-    @enemies.each do |enemy|
-      enemy.move
-    end
-  end
-
-  def move_bullets
-    @bullets.each do |bullet|
-      bullet.move
-    end
-  end
-
-  def move_power_ups
-    @power_ups.each do |power_up|
-      power_up.move
-    end
-  end
-
-  def execute_power_ups
-    @power_ups.dup.each do |power_up|
-      distance = Gosu.distance(power_up.x, power_up.y, @player.x, @player.y)
-      if distance < @player.radius + power_up.radius
-        @power_ups.delete power_up
-        @player.turn_shield_on
-      end
-    end
-  end
-
-  def execute_bullets_on_enemies
-    @enemies.dup.each do |enemy|
-      @bullets.dup.each do |bullet|
-        distance  = Gosu.distance(enemy.x, enemy.y, bullet.x, bullet.y)
-        if distance < enemy.radius + bullet.radius and !bullet.is_nuke?
-          @enemies.delete enemy
-          @bullets.delete bullet
-          explosion = Explosion.new(@window, enemy.x, enemy.y)
-          @explosions.push explosion
-          @enemies_destroyed += 1
-          @explosion_sound.play
-        end
-      end
-    end
-  end
-
-  def execute_enemy_explosions
-    @explosions.dup.each do |explosion|
-      @enemies.dup.each do |enemy|
-        explosion_kill_distance = Gosu.distance(enemy.x, enemy.y, explosion.x, explosion.y)
-        if explosion_kill_distance < enemy.radius + explosion.radius and enemy.y > 20
-          @enemies.delete enemy
-          explosion2 = Explosion.new(@window, enemy.x, enemy.y)
-          @explosions.push explosion2
-          @enemies_destroyed += 1
-          @explosion_sound.play
-        end
-      end
-      @explosions.delete explosion if explosion.finished
-    end
-  end
-
-  def max_enemies
-    MAX_ENEMIES
-  end
-
-  def enemies_destroyed_increment
-    @enemies_destroyed += 1
-  end
-
-end
+require_relative 'game_service'
 
 class SectorFive < Gosu::Window
   WIDTH = 800
@@ -132,6 +22,7 @@ class SectorFive < Gosu::Window
 
   def initialize_game
     @scene = :game
+    @game = GameService.new(self)
   end
 
   def initialize_end(fate)
@@ -225,44 +116,18 @@ class SectorFive < Gosu::Window
     @game.execute_bullets_on_enemies
     @game.execute_enemy_explosions
 
-  	enemies.dup.each do |enemy|
-  	  if enemy.y > HEIGHT + enemy.radius
-  	  	enemies.delete enemy
-  	  end
-  	end
+  	@game.delete_offscreen_enemies(HEIGHT)
+
   	bullets.dup.each do |bullet|
   	  bullets.delete bullet unless bullet.onscreen?
 
       if bullet.is_nuke? and bullet.paces == 50
-        bullets.delete bullet
-        explosion = Explosion.new(self, bullet.x, bullet.y)
-        explosions.push explosion
+        @game.detonate_nuke(bullet)        
+      end
+  	end
 
-        enemies.dup.each do |enemy|
-          enemies.delete enemy
-          explosion = Explosion.new(self, enemy.x, enemy.y)
-          explosions.push explosion
-          @game.enemies_destroyed_increment
-          explosion_sound.play
-        end
-      end
-  	end
   	initialize_end(:count_reached) if @game.enemies_appeared > @game.max_enemies
-  	enemies.dup.each do |enemy|
-  	  distance = Gosu.distance(enemy.x, enemy.y, player.x, player.y)
-  	  if distance < player.radius + enemy.radius
-        enemies.delete enemy
-        explosion = Explosion.new(self, enemy.x, enemy.y)
-        explosions.push explosion
-        @game.enemies_destroyed_increment
-        explosion_sound.play
-        if player.shield_on?
-          player.shield_hit!
-        else
-          initialize_end(:hit_by_enemy)
-        end
-      end
-  	end
+  	@game.check_and_perform_player_enemy_collision
   	initialize_end(:off_top) if player.y < -player.radius
   end
 

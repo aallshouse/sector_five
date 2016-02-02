@@ -3,7 +3,7 @@ class Bullet
 
   attr_reader :x, :y, :radius, :paces
 
-  def initialize(window, x, y, angle)
+  def initialize(window, x, y, angle, from_enemy=false)
     @x = x
     @y = y
     @direction = angle
@@ -12,6 +12,11 @@ class Bullet
     @window = window
     @is_nuke = false
     @paces = 0
+    @from_enemy = from_enemy
+  end
+
+  def from_enemy?
+    @from_enemy
   end
 
   def make_nuke

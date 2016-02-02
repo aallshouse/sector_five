@@ -1,13 +1,16 @@
 class Enemy
   SPEED = 2
+  ENEMY_SHOOTER_FREQUENCY = 0.05
 
-  attr_reader :x, :y, :radius
+  attr_reader :x, :y, :radius, :is_shooter
 
   def initialize(window)
     @radius = 20
     @x = rand(window.width - 2 * @radius) + @radius
     @y = 0
     @image = Gosu::Image.new('images/enemy.png')
+
+    @is_shooter = rand < ENEMY_SHOOTER_FREQUENCY
   end
 
   def move
