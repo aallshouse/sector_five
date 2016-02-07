@@ -138,6 +138,22 @@ class GameService
   #(left diagonal, right diagonal, and straight down)
   #TODO: Create method for performing enemy bullet/player collisions, similar to below
 
+  def check_and_perform_player_bullet_collision
+    @bullets.dup.each do |bullet|
+      if bullet.from_enemy?
+        distance = Gosu.distance(bullet.x, bullet.y, player.x, player.y)
+        if distance < player.radius + bullet.radius
+          if @player.shield_on?
+            @player.shield_hit!
+          else
+            #TODO: make this execute after a short time period so an explosion can be seen
+            @window.initialize_end(:hit_by_enemy_bullet)
+          end
+        end
+      end
+    end
+  end
+
   def check_and_perform_player_enemy_collision
     @enemies.dup.each do |enemy|
       distance = Gosu.distance(enemy.x, enemy.y, player.x, player.y)
@@ -150,6 +166,7 @@ class GameService
         if @player.shield_on?
           @player.shield_hit!
         else
+          #TODO: make this execute after a short time period so an explosion can be seen
           @window.initialize_end(:hit_by_enemy)
         end
       end

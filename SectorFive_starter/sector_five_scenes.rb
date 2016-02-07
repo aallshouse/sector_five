@@ -34,6 +34,10 @@ class SectorFive < Gosu::Window
   	  @message = "You were struck by an enemy ship."
   	  @message2 = "Before your ship was destroyed, "
   	  @message2 += "you took out #{@game.enemies_destroyed} enemy ships."
+    when :hit_by_enemy_bullet
+      @message = "You were struck by an enemy bullet."
+      @message2 = "Before your ship was destroyed, "
+      @message2 += "you took out #{@game.enemies_destroyed} enemy ships."
     when :off_top
   	  @message = "You got too close to the enemy mother ship."
   	  @message2 = "Before your ship was destroyed, "
@@ -115,6 +119,7 @@ class SectorFive < Gosu::Window
     @game.execute_power_ups
     @game.execute_bullets_on_enemies
     @game.execute_enemy_explosions
+    @game.check_and_perform_player_bullet_collision
 
   	@game.delete_offscreen_enemies(HEIGHT)
 
