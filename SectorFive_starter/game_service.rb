@@ -147,11 +147,9 @@ class GameService
         distance = Gosu.distance(bullet.x, bullet.y, player.x, player.y)
         if distance < player.radius + bullet.radius
           if @player.shield_on?
-            #TODO: Add explosion here to show bullet hitting shield
             perform_shield_hit(@bullets, bullet)
             @player.shield_hit!
           else
-            #TODO: make this execute after a short time period so an explosion can be seen
             perform_player_killed(@bullets, bullet, :hit_by_enemy_bullet)
           end
         end
@@ -197,7 +195,6 @@ class GameService
         enemies_destroyed_increment
         @explosion_sound.play
         if @player.shield_on?
-          #TODO: Add explosion here to show bullet hitting shield
           perform_shield_hit(@enemies, enemy)
           @player.shield_hit!
         else
