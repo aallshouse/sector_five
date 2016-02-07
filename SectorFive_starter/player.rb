@@ -19,6 +19,7 @@ class Player
   	@window = window
     @shield_is_on = false
     @shield_hits = 0
+    @is_dead = false
   end
 
   def shield_on?
@@ -31,6 +32,14 @@ class Player
       turn_shield_off
       @shield_hits = 0
     end
+  end
+
+  def is_dead?
+    @is_dead
+  end
+
+  def kill!
+    @is_dead = true
   end
 
   def turn_shield_on

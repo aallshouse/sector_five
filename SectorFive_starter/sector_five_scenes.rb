@@ -103,6 +103,9 @@ class SectorFive < Gosu::Window
   end
 
   def update_game
+    @game.increment_update_cycles
+    @game.perform_end?
+
   	player.turn_left if button_down?(Gosu::KbLeft)
   	player.turn_right if button_down?(Gosu::KbRight)
   	player.accelerate if button_down?(Gosu::KbUp)
@@ -163,7 +166,7 @@ class SectorFive < Gosu::Window
   end
 
   def draw_game
-  	player.draw
+  	player.draw unless player.is_dead?
   	enemies.each do |enemy|
   	  enemy.draw
   	end

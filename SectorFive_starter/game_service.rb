@@ -19,6 +19,9 @@ class GameService
     @enemies_destroyed = 0
     @explosion_sound = Gosu::Sample.new('sounds/explosion.ogg')
     @shooting_sound = Gosu::Sample.new('sounds/shoot.ogg')
+    @update_cycles = 0
+    @update_cycle_index_end = -1
+    @end_message = ''
   end
 
   def start_game
@@ -144,14 +147,44 @@ class GameService
         distance = Gosu.distance(bullet.x, bullet.y, player.x, player.y)
         if distance < player.radius + bullet.radius
           if @player.shield_on?
+            #TODO: Add explosion here to show bullet hitting shield
+            perform_shield_hit(@bullets, bullet)
             @player.shield_hit!
           else
             #TODO: make this execute after a short time period so an explosion can be seen
-            @window.initialize_end(:hit_by_enemy_bullet)
+            perform_player_killed(@bullets, bullet, :hit_by_enemy_bullet)
           end
         end
       end
     end
+  end
+
+  def increment_update_cycles
+    @update_cycles += 1
+  end
+
+  def perform_end?
+    if(@update_cycle_index_end != -1 and @update_cycles > @update_cycle_index_end)
+      @window.initialize_end(@end_message)
+    end
+  end
+
+  def perform_shield_hit(arr, item)
+    arr.delete item
+    explosion = Explosion.new(self, item.x, item.y)
+    @explosions.push explosion
+    @explosion_sound.play
+  end
+
+  def perform_player_killed(arr, item, message)
+    arr.delete item
+    @player.kill!
+    explosion = Explosion.new(self, player.x, player.y)
+    @explosions.push explosion
+    @explosion_sound.play
+
+    @end_message = message
+    @update_cycle_index_end = @update_cycles + 100
   end
 
   def check_and_perform_player_enemy_collision
@@ -164,10 +197,11 @@ class GameService
         enemies_destroyed_increment
         @explosion_sound.play
         if @player.shield_on?
+          #TODO: Add explosion here to show bullet hitting shield
+          perform_shield_hit(@enemies, enemy)
           @player.shield_hit!
         else
-          #TODO: make this execute after a short time period so an explosion can be seen
-          @window.initialize_end(:hit_by_enemy)
+          perform_player_killed(@enemies, enemy, :hit_by_enemy)
         end
       end
     end
