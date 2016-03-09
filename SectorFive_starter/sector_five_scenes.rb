@@ -106,9 +106,10 @@ class SectorFive < Gosu::Window
     @game.increment_update_cycles
     @game.perform_end?
 
-  	player.turn_left if button_down?(Gosu::KbLeft)
+    player.turn_left if button_down?(Gosu::KbLeft)
   	player.turn_right if button_down?(Gosu::KbRight)
   	player.accelerate if button_down?(Gosu::KbUp)
+    player.go_backwards if button_down?(Gosu::KbDown)
   	player.move
 
     #TODO: Ruby is pass by value and NOT pass by reference

@@ -20,6 +20,7 @@ class Player
     @shield_is_on = false
     @shield_hits = 0
     @is_dead = false
+    @backwards = false
   end
 
   def shield_on?
@@ -65,14 +66,26 @@ class Player
   	@angle -= ROTATION_SPEED
   end
 
+  def go_backwards
+    @backwards = true
+    @velocity_x += Gosu.offset_x(-@angle, ACCELERATION)
+    @velocity_y += Gosu.offset_y(-@angle, ACCELERATION)
+  end
+
   def accelerate
+    @backwards = false
     @velocity_x += Gosu.offset_x(@angle, ACCELERATION)
     @velocity_y += Gosu.offset_y(@angle, ACCELERATION)
   end
 
   def move
-  	@x += @velocity_x
-  	@y += @velocity_y
+    if @backwards
+      @x -= @velocity_x
+      @y -= @velocity_y
+    else
+      @x += @velocity_x
+      @y += @velocity_y
+    end
   	@velocity_x *= FRICTION
   	@velocity_y *= FRICTION
   	if @x > @window.width - @radius
