@@ -68,8 +68,8 @@ class Player
 
   def go_backwards
     @backwards = true
-    @velocity_x += Gosu.offset_x(-@angle, ACCELERATION)
-    @velocity_y += Gosu.offset_y(-@angle, ACCELERATION)
+    @velocity_x += Gosu.offset_x(@angle, ACCELERATION)
+    @velocity_y += Gosu.offset_y(@angle, ACCELERATION)
   end
 
   def accelerate
