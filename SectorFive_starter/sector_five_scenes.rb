@@ -200,7 +200,7 @@ class SectorFive < Gosu::Window
   end
 
   def button_down_game(id)
-  	if id == Gosu::KbSpace
+  	if id == Gosu::KbSpace and !player.is_dead?
   	  bullets.push Bullet.new(self, player.x, player.y, player.angle)
   	  shooting_sound.play(0.3)
   	end
